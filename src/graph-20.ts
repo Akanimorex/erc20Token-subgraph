@@ -1,35 +1,34 @@
 import { BigInt } from "@graphprotocol/graph-ts"
 import {
   Graph20,
-  Approval,
-  OwnershipTransferred,
   Transfer
 } from "../generated/Graph20/Graph20"
-import { ExampleEntity } from "../generated/schema"
+import { Account } from "../generated/schema"
+import { loadOrCreateUser } from "./utils"
 
-export function handleApproval(event: Approval): void {
+export function handleApproval(event: Transfer): void {
   // Entities can be loaded from the store using a string ID; this ID
   // needs to be unique across all entities of the same type
-  let entity = ExampleEntity.load(event.transaction.from)
+  // let entity = ExampleEntity.load(event.transaction.from)
 
-  // Entities only exist after they have been saved to the store;
-  // `null` checks allow to create entities on demand
-  if (!entity) {
-    entity = new ExampleEntity(event.transaction.from)
+  // // Entities only exist after they have been saved to the store;
+  // // `null` checks allow to create entities on demand
+  // if (!entity) {
+  //   entity = new ExampleEntity(event.transaction.from)
 
-    // Entity fields can be set using simple assignments
-    entity.count = BigInt.fromI32(0)
-  }
+  //   // Entity fields can be set using simple assignments
+  //   entity.count = BigInt.fromI32(0)
+  // }
 
-  // BigInt and BigDecimal math are supported
-  entity.count = entity.count + BigInt.fromI32(1)
+  // // BigInt and BigDecimal math are supported
+  // entity.count = entity.count + BigInt.fromI32(1)
 
-  // Entity fields can be set based on event parameters
-  entity.owner = event.params.owner
-  entity.spender = event.params.spender
+  // // Entity fields can be set based on event parameters
+  // entity.owner = event.params.owner
+  // entity.spender = event.params.spender
 
-  // Entities can be written to the store with `.save()`
-  entity.save()
+  // // Entities can be written to the store with `.save()`
+  // entity.save()
 
   // Note: If a handler doesn't require existing field values, it is faster
   // _not_ to load the entity from the store. Instead, create it fresh with
@@ -56,8 +55,19 @@ export function handleApproval(event: Approval): void {
   // - contract.totalSupply(...)
   // - contract.transfer(...)
   // - contract.transferFrom(...)
+
+
+  let sender = loadOrCreateUser(event.transaction.from.toHexString());
+  let receiver = loadOrCreateUser(event.params.to.toHexString());
+
+  let amount = event.params.value;
+
+  sender.balance = sender.balance.minus(amount);
+  receiver.balance = receiver.balance.plus(amount);
+
+  sender.save();
+  receiver.save();
 }
 
-export function handleOwnershipTransferred(event: OwnershipTransferred): void {}
 
 export function handleTransfer(event: Transfer): void {}
